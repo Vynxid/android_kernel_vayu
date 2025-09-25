@@ -19,7 +19,7 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
           # Hapus submodule dari konfigurasi git
-          git submodule deinit -f -- KernelSU || true
+          git submodule deinit -f -- KernelSU-Next || true
           git rm -f KernelSU || true
           rm -rf .git/modules/KernelSU-Next || true
 
