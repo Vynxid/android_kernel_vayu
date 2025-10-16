@@ -2,6 +2,15 @@ name: Build Kernel (4.14 - crDroid)
 
 on:
   workflow_dispatch:
+    inputs:
+      ks_option:
+        description: "Select Root Method"
+        required: true
+        default: "SukiSU-Ultra"
+        type: choice
+        options:
+          - KernelSU-Next
+          - SukiSU-Ultra
   schedule:
     - cron: "0 0 * * 6"
   push:
@@ -34,9 +43,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get update -y 
-          sudo apt install gcc-aarch64-linux-gnu -y
-          sudo apt install gcc-arm-linux-gnueabi -y
+          sudo apt-get update -y
+          sudo apt install gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi -y
           sudo apt install aria2 binutils make python3 libssl-dev build-essential bc bison flex unzip libssl-dev ca-certificates xz-utils mkbootimg cpio device-tree-compiler git git-lfs wget curl -y
 
       - name: Download Google Clang r547379
@@ -47,8 +55,18 @@ jobs:
           cd ..
           mv google-clang/clang-r547379 google-clang-r547379
 
-      - name: Setup KernelSU
+      # Opsi 1: KernelSU-Next
+      - name: Setup KernelSU (KernelSU-Next)
+        if: ${{ github.event.inputs.ks_option == 'KernelSU-Next' }}
         run: |
+          echo "Setting up KernelSU-Next..."
+          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -
+
+      # Opsi 2: SukiSU-Ultra
+      - name: Setup KernelSU (SukiSU-Ultra)
+        if: ${{ github.event.inputs.ks_option == 'SukiSU-Ultra' }}
+        run: |
+          echo "Setting up SukiSU-Ultra..."
           curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
 
       - name: GetTime
@@ -56,7 +74,7 @@ jobs:
         run: |
           echo "TIME=$(TZ=UTC+3 date +%s )" >> $GITHUB_OUTPUT
 
-      - name: Build Kernel (KernelSU + SUSFS)
+      - name: Build Kernel (KernelSU)
         run: |
           export PATH=$(pwd)/google-clang/bin/:$PATH
           make $KERNEL_CMDLINE $KERNEL_DEFCONFIG CC="ccache clang"
